@@ -12,20 +12,32 @@ export default function Navbar() {
 
   return (
     <nav className="bg-blue-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
-      {/* Logo */}
       <Link to="/" className="text-2xl font-bold tracking-wide">
         🎟️ EventZen
       </Link>
 
-      {/* Navigation Links */}
       <div className="flex items-center gap-6">
         <Link to="/" className="hover:underline">Events</Link>
 
         {user ? (
           <>
-            <Link to="/my-bookings" className="hover:underline">
-              My Bookings
-            </Link>
+            {/* Show My Bookings for CUSTOMER */}
+            {user.role === 'CUSTOMER' && (
+              <Link to="/my-bookings" className="hover:underline">
+                My Bookings
+              </Link>
+            )}
+
+            {/* Show Admin Panel for ADMIN */}
+            {user.role === 'ADMIN' && (
+              <Link
+                to="/admin"
+                className="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full font-semibold hover:bg-yellow-300 transition"
+              >
+                Admin Panel
+              </Link>
+            )}
+
             <span className="text-sm text-blue-200">
               Hi, {user.fullName}
             </span>

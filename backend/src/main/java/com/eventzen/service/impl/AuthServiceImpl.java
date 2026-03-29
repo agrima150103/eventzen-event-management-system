@@ -9,8 +9,7 @@ import com.eventzen.repository.UserRepository;
 import com.eventzen.security.jwt.JwtService;
 import com.eventzen.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,15 +29,14 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Email already registered");
         }
 
-        // If role is not provided in request, default to CUSTOMER
-        Role role = (request.getRole() != null) ? request.getRole() : Role.CUSTOMER;
-
+        // ✅ ALWAYS force CUSTOMER role for public registration
+        // Nobody can self-register as ADMIN — security rule!
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
-                .role(role)
+                .role(Role.CUSTOMER)  // Always CUSTOMER
                 .enabled(true)
                 .build();
 

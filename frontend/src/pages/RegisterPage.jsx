@@ -6,7 +6,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    fullName: '', email: '', password: '', phone: ''
+    fullName: '', email: '', password: '', phone: '', role: 'CUSTOMER'
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,10 +21,16 @@ export default function RegisterPage() {
     setError('')
 
     try {
-      await api.post('/auth/register', form)
+      const res = await api.post('/auth/register', form)
+      console.log('Register success:', res.data)
       navigate('/login')
     } catch (err) {
-      setError('Registration failed. Email may already be in use.')
+      console.error('Register error:', err)
+      // Show the ACTUAL error from backend
+      const message = err.response?.data?.message
+        || err.response?.data
+        || 'Registration failed. Please try again.'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -45,7 +51,9 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
             <input
               type="text"
               name="fullName"
@@ -53,12 +61,14 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="Agrima Saxena"
+              placeholder="Your Full Name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -71,7 +81,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -84,7 +96,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone
+            </label>
             <input
               type="text"
               name="phone"
@@ -94,6 +108,9 @@ export default function RegisterPage() {
               placeholder="9876543210"
             />
           </div>
+
+          {/* Hidden role field — always CUSTOMER for public registration */}
+          <input type="hidden" name="role" value="CUSTOMER" />
 
           <button
             type="submit"

@@ -21,10 +21,10 @@ export default function LoginPage() {
     setError('')
 
     try {
+      // ✅ Using api from axios.js which has correct baseURL
       const res = await api.post('/auth/login', form)
       const data = res.data
 
-      // Save user info and token to context
       login({
         userId: data.userId,
         fullName: data.fullName,
@@ -32,9 +32,17 @@ export default function LoginPage() {
         role: data.role
       }, data.token)
 
-      navigate('/')
+      // ✅ Redirect based on role
+      if (data.role === 'ADMIN') {
+        navigate('/admin')
+      } else {
+        navigate('/')
+      }
     } catch (err) {
-      setError('Invalid email or password. Please try again.')
+      console.error('Login error:', err)
+      const message = err.response?.data?.message
+        || 'Invalid email or password. Please try again.'
+      setError(message)
     } finally {
       setLoading(false)
     }
