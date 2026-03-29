@@ -1,0 +1,41 @@
+package com.eventzen.controller;
+
+import com.eventzen.dto.request.BookingRequest;
+import com.eventzen.dto.response.BookingResponse;
+import com.eventzen.service.BookingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/bookings")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
+public class BookingController {
+
+    private final BookingService bookingService;
+
+    // POST /api/v1/bookings — Create a new booking
+    @PostMapping
+    public ResponseEntity<BookingResponse> createBooking(
+            @Valid @RequestBody BookingRequest request) {
+        return ResponseEntity.ok(bookingService.createBooking(request));
+    }
+
+    // GET /api/v1/bookings/user/{userId} — Get all bookings for a user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<BookingResponse>> getBookingsByUser(
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(bookingService.getBookingsByUser(userId));
+    }
+
+    // PUT /api/v1/bookings/{id}/cancel — Cancel a booking
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponse> cancelBooking(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
+    }
+}
