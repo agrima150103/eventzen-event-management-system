@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: eventzen-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: AgAdi@15.01.08_
+      MYSQL_DATABASE: eventzen_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - eventzen-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Spring Boot Backend
+  backend:
+    build: ./backend
+    container_name: eventzen-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/eventzen_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: AgAdi@15.01.08_
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - eventzen-network
+
+  # React Frontend
+  frontend:
+    build: ./frontend
+    container_name: eventzen-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - eventzen-network
+
+networks:
+  eventzen-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
