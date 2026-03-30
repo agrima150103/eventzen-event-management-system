@@ -13,10 +13,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class BookingController {
 
     private final BookingService bookingService;
+
+    // GET /api/v1/bookings — Get ALL bookings (for admin)
+    @GetMapping
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
+    }
 
     // POST /api/v1/bookings — Create a new booking
     @PostMapping
@@ -25,7 +30,7 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.createBooking(request));
     }
 
-    // GET /api/v1/bookings/user/{userId} — Get all bookings for a user
+    // GET /api/v1/bookings/user/{userId} — Get bookings for a specific user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BookingResponse>> getBookingsByUser(
             @PathVariable Long userId) {

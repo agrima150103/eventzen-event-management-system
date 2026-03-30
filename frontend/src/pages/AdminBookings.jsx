@@ -2,100 +2,100 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
+import AdminShell from '../components/AdminShell'
 
 export default function AdminBookings() {
-  const { user } = useAuth()
+  const { user, isAuthReady } = useAuth()
   const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'ADMIN') { navigate('/login'); return }
-  }, [user])
+    if (!isAuthReady) return
+    if (!user || user.role !== 'ADMIN') {
+      navigate('/login')
+      return
+    }
+    fetchBookings()
+  }, [user, isAuthReady, navigate])
 
   const fetchBookings = async () => {
-    if (!userId) return
-    setLoading(true)
     try {
-      const res = await api.get(`/bookings/user/${userId}`)
-      setBookings(res.data.data ?? res.data)
+      const res = await api.get('/bookings')
+      setBookings(res.data.data ?? res.data ?? [])
     } catch (err) {
       console.error(err)
-      setBookings([])
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-blue-600 mb-6">
-          View Bookings
-        </h1>
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-[#ece7df] flex items-center justify-center text-slate-500">
+        Loading...
+      </div>
+    )
+  }
 
-        {/* Search by User ID */}
-        <div className="bg-white rounded-2xl shadow p-6 mb-6 flex gap-4">
-          <input
-            type="number"
-            placeholder="Enter User ID to view bookings"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            className="border rounded-lg px-4 py-2 flex-1"
-          />
-          <button
-            onClick={fetchBookings}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Search
-          </button>
+  const confirmed = bookings.filter(b => b.bookingStatus === 'CONFIRMED').length
+  const cancelled = bookings.filter(b => b.bookingStatus === 'CANCELLED').length
+
+  return (
+    <AdminShell title="Bookings" subtitle="Dashboard / Bookings">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-5">
+        <div className="rounded-[28px] bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Total Bookings</p>
+          <p className="mt-2 text-4xl font-bold text-slate-900">{bookings.length}</p>
+        </div>
+        <div className="rounded-[28px] bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Confirmed</p>
+          <p className="mt-2 text-4xl font-bold text-green-600">{confirmed}</p>
+        </div>
+        <div className="rounded-[28px] bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Cancelled</p>
+          <p className="mt-2 text-4xl font-bold text-red-500">{cancelled}</p>
+        </div>
+      </div>
+
+      <section className="rounded-[28px] bg-white p-6 shadow-sm">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">All Customer Bookings</p>
+            <h2 className="text-2xl font-bold text-slate-900">Booking Records ({bookings.length})</h2>
+          </div>
+          <span className="rounded-full bg-[#f4efe8] px-4 py-2 text-sm font-semibold text-slate-700">Live</span>
         </div>
 
-        {/* Bookings Table */}
-        {bookings.length > 0 ? (
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="px-4 py-3 text-left">Booking ID</th>
-                  <th className="px-4 py-3 text-left">User</th>
-                  <th className="px-4 py-3 text-left">Event</th>
-                  <th className="px-4 py-3 text-left">Seats</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking, i) => (
-                  <tr key={booking.id}
-                    className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-3">#{booking.id}</td>
-                    <td className="px-4 py-3">{booking.userFullName}</td>
-                    <td className="px-4 py-3">{booking.eventName}</td>
-                    <td className="px-4 py-3">{booking.numberOfSeats}</td>
-                    <td className="px-4 py-3">₹{booking.totalAmount}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold
-                        ${booking.bookingStatus === 'CONFIRMED'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'}`}>
-                        {booking.bookingStatus}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {new Date(booking.bookingDate).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {loading ? (
+          <div className="rounded-3xl bg-[#f7f3ee] p-8 text-center text-slate-500">Loading bookings...</div>
+        ) : bookings.length === 0 ? (
+          <div className="rounded-3xl bg-[#f7f3ee] p-8 text-center text-slate-500">No bookings yet.</div>
         ) : (
-          <p className="text-center text-gray-400 mt-10">
-            Enter a user ID above to view their bookings
-          </p>
+          <div className="overflow-hidden rounded-[24px] border border-slate-200">
+            <div className="grid grid-cols-7 gap-3 bg-black px-5 py-4 text-sm font-semibold text-white">
+              <div>ID</div><div>Customer</div><div>Event</div><div>Seats</div><div>Total</div><div>Date</div><div>Status</div>
+            </div>
+            <div className="divide-y divide-slate-200 bg-white">
+              {bookings.map((b) => (
+                <div key={b.id} className="grid grid-cols-7 gap-3 px-5 py-4 text-sm text-slate-700">
+                  <div className="font-semibold text-slate-900">#{b.id}</div>
+                  <div>{b.userName || b.userEmail || `User #${b.userId}`}</div>
+                  <div>{b.eventName || `Event #${b.eventId}`}</div>
+                  <div>{b.numberOfSeats}</div>
+                  <div>₹{b.totalAmount?.toFixed(2) || '0.00'}</div>
+                  <div>{b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—'}</div>
+                  <div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${b.bookingStatus === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                      {b.bookingStatus}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
-      </div>
-    </div>
+      </section>
+    </AdminShell>
   )
 }

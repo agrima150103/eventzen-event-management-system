@@ -1,6 +1,5 @@
 package com.eventzen.dto.response;
 
-import com.eventzen.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +14,5 @@ public class AuthResponse {
     private Long userId;
     private String fullName;
     private String email;
-    private Role role;
+    private String role;
 }

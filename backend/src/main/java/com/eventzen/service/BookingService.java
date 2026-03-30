@@ -7,12 +7,11 @@ import java.util.List;
 
 public interface BookingService {
 
-    // Book an event
     BookingResponse createBooking(BookingRequest request);
 
-    // Get all bookings for a specific user
     List<BookingResponse> getBookingsByUser(Long userId);
 
-    // Cancel a booking by booking ID
+    List<BookingResponse> getAllBookings();
+
     BookingResponse cancelBooking(Long bookingId);
 }

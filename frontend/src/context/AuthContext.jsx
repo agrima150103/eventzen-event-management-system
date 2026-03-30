@@ -1,20 +1,29 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
-// AuthContext stores login state globally
-// Any component can access user info and token from here
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
-  // On app load, check if user was already logged in
   useEffect(() => {
-    const savedToken = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
-    if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
+    try {
+      const savedToken = localStorage.getItem('token')
+      const savedUser = localStorage.getItem('user')
+
+      if (savedToken && savedUser) {
+        setToken(savedToken)
+        setUser(JSON.parse(savedUser))
+      }
+    } catch (error) {
+      console.error('Failed to restore auth state:', error)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setUser(null)
+      setToken(null)
+    } finally {
+      setIsAuthReady(true)
     }
   }, [])
 
@@ -33,13 +42,20 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthReady,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
 }
 
-// Custom hook — any component can do: const { user, login, logout } = useAuth()
 export function useAuth() {
   return useContext(AuthContext)
 }

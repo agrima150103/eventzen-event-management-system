@@ -2,29 +2,41 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
+import AdminShell from '../components/AdminShell'
 
 export default function AdminVenues() {
-  const { user } = useAuth()
+  const { user, isAuthReady } = useAuth()
   const navigate = useNavigate()
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
-    name: '', address: '', city: '', capacity: '', amenities: ''
+    name: '',
+    address: '',
+    city: '',
+    capacity: '',
+    amenities: '',
   })
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!user || user.role !== 'ADMIN') { navigate('/login'); return }
+    if (!isAuthReady) return
+    if (!user || user.role !== 'ADMIN') {
+      navigate('/login')
+      return
+    }
     fetchVenues()
-  }, [user])
+  }, [user, isAuthReady, navigate])
 
   const fetchVenues = async () => {
     try {
       const res = await api.get('/venues')
-      setVenues(res.data.data ?? res.data)
-    } catch (err) { console.error(err) }
-    finally { setLoading(false) }
+      setVenues(res.data.data ?? res.data ?? [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -34,12 +46,18 @@ export default function AdminVenues() {
   const handleCreate = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/venues', { ...form, capacity: parseInt(form.capacity) })
-      setMessage('✅ Venue created successfully!')
+      await api.post('/venues', {
+        ...form,
+        capacity: parseInt(form.capacity, 10),
+      })
+      setMessage('Venue created successfully!')
       setShowForm(false)
       setForm({ name: '', address: '', city: '', capacity: '', amenities: '' })
       fetchVenues()
-    } catch (err) { setMessage('❌ Failed to create venue.') }
+    } catch (err) {
+      console.error(err)
+      setMessage('Failed to create venue.')
+    }
   }
 
   const handleDelete = async (id) => {
@@ -47,94 +65,97 @@ export default function AdminVenues() {
     try {
       await api.delete(`/venues/${id}`)
       fetchVenues()
-    } catch (err) { alert('Failed to delete') }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete venue.')
+    }
+  }
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-[#ece7df] flex items-center justify-center text-slate-500">
+        Loading...
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Manage Venues</h1>
-          <button onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            {showForm ? 'Cancel' : '+ Add Venue'}
-          </button>
-        </div>
-
-        {message && (
-          <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
-            {message}
+    <AdminShell
+      title="Venues"
+      subtitle="Dashboard / Venues"
+      action={
+        <button
+          onClick={() => { setShowForm((prev) => !prev); setMessage('') }}
+          className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        >
+          {showForm ? 'Close Form' : '+ Add Venue'}
+        </button>
+      }
+    >
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_400px]">
+        <section className="rounded-[28px] bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500">Venue Directory</p>
+              <h2 className="text-2xl font-bold text-slate-900">Available Venues ({venues.length})</h2>
+            </div>
+            <span className="rounded-full bg-[#f4efe8] px-4 py-2 text-sm font-semibold text-slate-700">Active</span>
           </div>
-        )}
 
-        {showForm && (
-          <div className="bg-white rounded-2xl shadow p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Create New Venue</h2>
-            <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
-              <input name="name" placeholder="Venue Name" value={form.name}
-                onChange={handleChange} required
-                className="border rounded-lg px-3 py-2 col-span-2" />
-              <input name="address" placeholder="Address" value={form.address}
-                onChange={handleChange} required
-                className="border rounded-lg px-3 py-2 col-span-2" />
-              <input name="city" placeholder="City" value={form.city}
-                onChange={handleChange}
-                className="border rounded-lg px-3 py-2" />
-              <input name="capacity" placeholder="Capacity" type="number"
-                value={form.capacity} onChange={handleChange} required
-                className="border rounded-lg px-3 py-2" />
-              <input name="amenities" placeholder="Amenities (WiFi, Parking...)"
-                value={form.amenities} onChange={handleChange}
-                className="border rounded-lg px-3 py-2 col-span-2" />
-              <button type="submit"
-                className="col-span-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-                Create Venue
-              </button>
-            </form>
-          </div>
-        )}
-
-        {loading ? (
-          <p className="text-center text-gray-400">Loading...</p>
-        ) : (
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">City</th>
-                  <th className="px-4 py-3 text-left">Capacity</th>
-                  <th className="px-4 py-3 text-left">Amenities</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {venues.map((venue, i) => (
-                  <tr key={venue.id}
-                    className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-3 font-medium">{venue.name}</td>
-                    <td className="px-4 py-3">{venue.city}</td>
-                    <td className="px-4 py-3">{venue.capacity}</td>
-                    <td className="px-4 py-3">{venue.amenities}</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
-                        {venue.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => handleDelete(venue.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+          {loading ? (
+            <div className="rounded-3xl bg-[#f7f3ee] p-8 text-center text-slate-500">Loading venues...</div>
+          ) : venues.length === 0 ? (
+            <div className="rounded-3xl bg-[#f7f3ee] p-8 text-center text-slate-500">No venues found.</div>
+          ) : (
+            <div className="overflow-hidden rounded-[24px] border border-slate-200">
+              <div className="grid grid-cols-6 gap-3 bg-black px-5 py-4 text-sm font-semibold text-white">
+                <div>Name</div><div>City</div><div>Capacity</div><div>Amenities</div><div>Status</div><div>Actions</div>
+              </div>
+              <div className="divide-y divide-slate-200 bg-white">
+                {venues.map((venue) => (
+                  <div key={venue.id} className="grid grid-cols-6 gap-3 px-5 py-4 text-sm text-slate-700">
+                    <div className="font-semibold text-slate-900">{venue.name}</div>
+                    <div>{venue.city || '—'}</div>
+                    <div>{venue.capacity}</div>
+                    <div className="truncate">{venue.amenities || '—'}</div>
+                    <div><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">{venue.status || 'AVAILABLE'}</span></div>
+                    <div>
+                      <button onClick={() => handleDelete(venue.id)} className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-600">Delete</button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-[28px] bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <p className="text-sm text-slate-500">Create</p>
+            <h2 className="text-2xl font-bold text-slate-900">New Venue</h2>
           </div>
-        )}
+
+          {message && <div className="mb-4 rounded-2xl bg-[#f7f3ee] px-4 py-3 text-sm font-medium text-slate-700">{message}</div>}
+
+          {!showForm ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-[#faf7f3] p-8 text-center">
+              <p className="text-sm text-slate-500">Add a venue with address, city, capacity and amenities.</p>
+              <button onClick={() => setShowForm(true)} className="mt-4 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">Open Venue Form</button>
+            </div>
+          ) : (
+            <form onSubmit={handleCreate} className="space-y-4">
+              <input name="name" placeholder="Venue Name" value={form.name} onChange={handleChange} required className="w-full rounded-2xl border border-slate-200 bg-[#faf7f3] px-4 py-3 outline-none focus:border-slate-400" />
+              <input name="address" placeholder="Address" value={form.address} onChange={handleChange} required className="w-full rounded-2xl border border-slate-200 bg-[#faf7f3] px-4 py-3 outline-none focus:border-slate-400" />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <input name="city" placeholder="City" value={form.city} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-[#faf7f3] px-4 py-3 outline-none focus:border-slate-400" />
+                <input name="capacity" placeholder="Capacity" type="number" value={form.capacity} onChange={handleChange} required className="w-full rounded-2xl border border-slate-200 bg-[#faf7f3] px-4 py-3 outline-none focus:border-slate-400" />
+              </div>
+              <input name="amenities" placeholder="Amenities (WiFi, Parking...)" value={form.amenities} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-[#faf7f3] px-4 py-3 outline-none focus:border-slate-400" />
+              <button type="submit" className="w-full rounded-2xl bg-[#2563eb] px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">Create Venue</button>
+            </form>
+          )}
+        </section>
       </div>
-    </div>
+    </AdminShell>
   )
 }

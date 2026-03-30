@@ -2,10 +2,14 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: eventzen
+
   datasource:
-    url: jdbc:mysql://localhost:3306/eventzen_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/eventzen
     username: root
     password: AgAdi@15.01.08_
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
@@ -15,18 +19,24 @@ spring:
       hibernate:
         format_sql: true
 
-  jackson:
-    serialization:
-      fail-on-empty-beans: false
-
-app:
-  jwt:
-    secret: yourSuperSecretKeyForJwtTokenWhichShouldBeLongEnough123456
-    expiration: 86400000
+application:
+  security:
+    jwt:
+      secret-key: VGhpc0lzQVN1cGVyU2VjcmV0S2V5Rm9ySldUQXV0aGVudGljYXRpb25FdmVudFplbg==
+      expiration: 86400000
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    disable-swagger-default-url: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    org.springframework.security: INFO

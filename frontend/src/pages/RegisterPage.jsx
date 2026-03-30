@@ -1,15 +1,20 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    fullName: '', email: '', password: '', phone: '', role: 'CUSTOMER'
+    fullName: '',
+    email: '',
+    password: '',
+    role: 'CUSTOMER',
   })
-  const [error, setError] = useState('')
+
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -18,112 +23,102 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setMessage('')
     setError('')
 
     try {
-      const res = await api.post('/auth/register', form)
-      console.log('Register success:', res.data)
-      navigate('/login')
+      await api.post('/auth/register', form)
+      setMessage('✅ Registration successful! Redirecting to login...')
+      setTimeout(() => navigate('/login'), 1200)
     } catch (err) {
-      console.error('Register error:', err)
-      // Show the ACTUAL error from backend
-      const message = err.response?.data?.message
-        || err.response?.data
-        || 'Registration failed. Please try again.'
-      setError(message)
+      console.error(err)
+      setError(
+        err.response?.data?.message ||
+          'Registration failed. Please check your details.'
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">
+    <div className="min-h-screen bg-[#ece7df] flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-[32px] bg-white p-8 shadow-xl">
+        <p className="text-center text-sm uppercase tracking-[0.3em] text-slate-500">
+          EventZen
+        </p>
+        <h2 className="mt-3 text-center text-4xl font-bold text-slate-900">
           Create Account
         </h2>
+        <p className="mt-2 text-center text-sm text-slate-500">
+          Register and start using EventZen
+        </p>
+
+        {message && (
+          <div className="mt-5 rounded-2xl bg-green-100 px-4 py-3 text-sm text-green-700">
+            {message}
+          </div>
+        )}
 
         {error && (
-          <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">
+          <div className="mt-5 rounded-2xl bg-red-100 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={form.fullName}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="Your Full Name"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <input
+            type="text"
+            name="fullName"
+            value={form.fullName}
+            onChange={handleChange}
+            required
+            placeholder="Full Name"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="you@example.com"
-            />
-          </div>
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            placeholder="Email"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="••••••••"
-            />
-          </div>
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            placeholder="Password"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone
-            </label>
-            <input
-              type="text"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="9876543210"
-            />
-          </div>
-
-          {/* Hidden role field — always CUSTOMER for public registration */}
-          <input type="hidden" name="role" value="CUSTOMER" />
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
+          >
+            <option value="CUSTOMER">Customer</option>
+            <option value="ADMIN">Admin</option>
+          </select>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full rounded-2xl bg-black py-3 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="mt-5 text-center text-sm text-slate-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">
+          <Link to="/login" className="font-semibold text-slate-900 hover:underline">
             Login
           </Link>
         </p>

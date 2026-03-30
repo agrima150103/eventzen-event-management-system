@@ -78,6 +78,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public BookingResponse cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)

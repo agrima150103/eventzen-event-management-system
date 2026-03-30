@@ -11,15 +11,12 @@ public class RegisterRequest {
     @NotBlank(message = "Full name is required")
     private String fullName;
 
-    @Email(message = "Invalid email")
     @NotBlank(message = "Email is required")
+    @Email(message = "Enter a valid email")
     private String email;
 
     @NotBlank(message = "Password is required")
     private String password;
 
-    private String phone;
-
-    // Optional — defaults to CUSTOMER if not provided
     private Role role;
 }
