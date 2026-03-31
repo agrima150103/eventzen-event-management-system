@@ -1,8 +1,5 @@
-version: '3.8'
-
 services:
 
-  # MySQL Database
   mysql:
     image: mysql:8.0
     container_name: eventzen-mysql
@@ -20,23 +17,22 @@ services:
       timeout: 20s
       retries: 10
 
-  # Spring Boot Backend
   backend:
     build: ./backend
     container_name: eventzen-backend
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/eventzen_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/eventzen_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: AgAdi@15.01.08_
     depends_on:
       mysql:
         condition: service_healthy
+    restart: on-failure
     networks:
       - eventzen-network
 
-  # React Frontend
   frontend:
     build: ./frontend
     container_name: eventzen-frontend
